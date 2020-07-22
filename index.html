@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Total Sum</title>
+    <style>
+        * {
+            margin: 0px;
+            padding: 0px;
+            font-family: cursive;
+
+
+        }
+
+        .buttonCorrectAnswer {
+            position: fixed;
+            height: 50px;
+            width: 50%;
+            font-size: 30px;
+
+        }
+
+        .numberDiv {
+            height: 40px;
+            text-align: center;
+            font-size: 35px;
+        }
+
+        #gameEndDiv {
+            text-align: center;
+            margin-top: 25%;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="root"></div>
+
+    <script src="https://unpkg.com/react@16/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@16/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/babel-standalone@6.15.0/babel.min.js"></script>
+
+    <script type="text/babel">
+
+        const WINDOW_HEIGHT = window.innerHeight
+        const WINDOW_WIDTH = window.innerWidth
+        const HEADING_DIV_HEIGHT = 37
+        const SCORE_DIV_HEIGHT = 37 * 3
+        const QUESTION_DIV_HEIGHT = 37
+        const GAME_DIV_HEIGHT = WINDOW_HEIGHT - HEADING_DIV_HEIGHT - SCORE_DIV_HEIGHT - QUESTION_DIV_HEIGHT
+
+        const MAX_LIFE = 5
+        const MAX_TIME = 5000
+
+        let measurments = `
+        WINDOW_WIDTH : ${WINDOW_WIDTH}
+        WINDOW_HEIGHT : ${WINDOW_HEIGHT} 
+        HEADING_DIV_HEIGHT : ${HEADING_DIV_HEIGHT}
+        SCORE_DIV_HEIGHT : ${SCORE_DIV_HEIGHT}
+        QUESTION_DIV_HEIGHT : ${QUESTION_DIV_HEIGHT}
+        GAME_DIV_HEIGHT : ${GAME_DIV_HEIGHT}
+        `
+        console.log(measurments)
+
+        const MAIN_DIV_STYLE = {
+            height: WINDOW_HEIGHT + "px",
+        }
+        const HEADING_DIV_STYLE = {
+            textAlign: "center",
+
+            height: HEADING_DIV_HEIGHT + "px",
+        }
+        const SCORE_DIV_STYLE = {
+            textAlign: "center",
+
+            height: SCORE_DIV_HEIGHT + "px",
+        }
+        const QUESTION_DIV_STYLE = {
+            height: QUESTION_DIV_HEIGHT + "px",
+            textAlign: "center",
+            fontSize: "25px"
+        }
+        const GAME_DIV_STYLE = {
+            display: "flex",
+            height: GAME_DIV_HEIGHT + "px",
+        }
+
+
+
+
+
+        class Game5 extends React.Component {
+            constructor(props) {
+                super(props)
+                this.state = {
+                    gameStatus: "playing",
+                    score: 0,
+                    scoreChange: "",
+                    life: { max: MAX_LIFE, remaining: MAX_LIFE },
+                    time: { max: MAX_TIME, remaining: MAX_TIME },
+                    questionDetails: getQuestionDetails()
+                }
+            }
+
+            componentWillMount() {
+                this.timeRemainingId = setInterval(this.decreaseTimeRemaining, 10)
+            }
+
+
+            decreaseTimeRemaining = () => {
+                if (this.state.time["remaining"] != 0) {
+                    this.state.time["remaining"] -= 10
+                    this.setState({ time: this.state.time })
+                } else {
+                    this.nextMove("timeout", null)
+                }
+            }
+
+
+            nextMove = (action, ans) => {
+
+                if (action == "player") {
+                    let correctAnswer = this.state.questionDetails["answer"]
+                    if (correctAnswer == ans) {
+                        this.setState((state, props) => ({
+                            score: state.score + 10,
+                            scoreChange: "+10",
+                            time: { max: MAX_TIME, remaining: MAX_TIME },
+                            questionDetails: getQuestionDetails()
+                        }))
+                    } else {
+                        this.setState((state, props) => ({
+                            score: state.score - 5,
+                            scoreChange: "-5",
+                            time: { max: MAX_TIME, remaining: MAX_TIME },
+                            life: { max: MAX_LIFE, remaining: this.state.life["remaining"] - 1 },
+                            questionDetails: getQuestionDetails()
+                        }))
+                    }
+
+                }
+
+                if (action == "timeout") {
+                    this.setState((state, props) => ({
+                        scoreChange: "+0",
+                        time: { max: MAX_TIME, remaining: MAX_TIME },
+                        life: { max: MAX_LIFE, remaining: this.state.life["remaining"] - 1 },
+                        questionDetails: getQuestionDetails()
+                    }))
+
+                }
+
+                if (action == "restart") {
+                    this.setState({
+                        gameStatus: "playing",
+                        score: 0,
+                        scoreChange: "",
+                        life: { max: MAX_LIFE, remaining: MAX_LIFE },
+                        time: { max: MAX_TIME, remaining: MAX_TIME },
+                        questionDetails: getQuestionDetails()
+                    })
+
+                    this.timeRemainingId = setInterval(this.decreaseTimeRemaining, 10)
+                }
+
+
+                // if no life remains then end game
+                if (this.state.life["remaining"] == 0) {
+                    clearInterval(this.timeRemainingId)
+                    this.setState({ gameStatus: "ended", time: { max: MAX_TIME, remaining: 0 } })
+                }
+
+
+
+            }
+
+
+
+
+
+            render() {
+                return this.state.gameStatus == "playing" ? <div id="mainDiv" style={MAIN_DIV_STYLE}>
+
+                    <div id="headingDiv" style={HEADING_DIV_STYLE}>
+                        <h1>TOTAL SUM</h1>
+                    </div>
+
+                    <div id="scoreDiv" style={SCORE_DIV_STYLE}>
+                        <p> Score {this.state.score} {this.state.scoreChange} </p>
+                    life&nbsp;&nbsp;
+                    <progress max={this.state.life["max"]} value={this.state.life["remaining"]} > </progress>
+                        <br />
+                    time&nbsp;&nbsp;
+                    <progress max={this.state.time["max"]} value={this.state.time["remaining"]} > </progress>
+                    </div>
+
+                    <div id="questionDiv" style={QUESTION_DIV_STYLE}>
+                        {this.state.questionDetails["question"]}
+                    </div>
+
+                    <div id="gameDiv" style={GAME_DIV_STYLE}>
+
+                        <div id="gameDiv1" style={{ width: "50%" }}>
+                            {this.state.questionDetails["twoNumbersAndSum"][0]["numbers"].map((number, index) => {
+                                return <div className="numberDiv" key={index} >{number} </div>
+                            })}
+                            <div className="numberDiv"><button>total Sum</button></div>
+                            <br />
+                            <button onClick={() => this.nextMove("player", 0)} className="buttonCorrectAnswer" style={{ top: WINDOW_HEIGHT - 40 + "px" }}>Correct Answer </button>
+                        </div>
+
+
+                        <div id="gameDiv2" style={{ width: "50%" }}>
+                            {this.state.questionDetails["twoNumbersAndSum"][1]["numbers"].map((number, index) => {
+                                return <div className="numberDiv" key={index} >{number} </div>
+                            })}
+                            <div className="numberDiv"><button>total Sum</button></div>
+                            <br />
+                            <button onClick={() => this.nextMove("player", 1)} className="buttonCorrectAnswer" style={{ top: WINDOW_HEIGHT - 40 + "px" }}>Correct Answer</button>
+                        </div>
+
+                    </div>
+                </div>
+                    : <div id="gameEndDiv" onClick={() => this.nextMove("restart", null)}>
+                        <h1>GAME ENDED </h1>
+                        <h2>Your Score {this.state.score}</h2>
+                        <h3>Click Here to play again </h3>
+                    </div>
+
+            }
+        }
+
+        ReactDOM.render(<Game5 />, document.getElementById("root"))
+
+
+
+        //***************************** FUNCTIONS ***********************************
+
+        function getQuestionDetails() {
+
+            const N = Math.floor(Math.random() * 4 + 2)
+            let numbersAndSum1 = getNumbersAndSum(N)
+            let numbersAndSum2 = getNumbersAndSum(N)
+
+            let questionDetails = {
+                question: null,
+                twoNumbersAndSum: [numbersAndSum1, numbersAndSum2],
+                answer: -1
+            }
+
+
+
+            let { sum: sum1 } = numbersAndSum1
+            let { sum: sum2 } = numbersAndSum2
+            let sum1IsPositive = sum1 > 0
+            let sum2IsPositive = sum2 > 0
+            let sum1IsZero = sum1 == 0
+            let sum2IsZero = sum2 == 0
+            let sum1IsGreaterThanSum2 = sum1 > sum2
+
+            //if one is zero and one is non-zero
+            if (!(sum1IsZero == sum2IsZero)) {
+
+                questionDetails["question"] = "Which total sum is zero"
+                let ans = sum1IsZero ? 0 : 1
+                questionDetails["answer"] = ans
+                return questionDetails
+
+            }
+
+
+            //if one is positive and one is negative
+            if (!(sum1IsPositive == sum2IsPositive)) {
+                let questions = ["positive", "negative"]
+                let randomQuestion = questions[Math.floor(Math.random() * 2)]
+                let ans
+                switch (randomQuestion) {
+                    case "positive":
+                        questionDetails["question"] = "Which total sum is positive"
+                        ans = sum1IsPositive ? 0 : 1
+                        questionDetails["answer"] = ans
+                        return questionDetails
+                        break;
+
+                    case "negative":
+                        questionDetails["question"] = "Which total sum is negative"
+                        ans = sum1IsPositive ? 1 : 0
+                        questionDetails["answer"] = ans
+                        return questionDetails
+                        break;
+
+                    default:
+                        break;
+                }
+            }
+
+            // one is greater than another
+            if (sum1IsGreaterThanSum2) {
+                questionDetails["question"] = "Which total sum is greater"
+                questionDetails["answer"] = 0
+                return questionDetails
+            } else {
+                //edge case if equals
+                questionDetails["question"] = "Which total sum is greater"
+                questionDetails["answer"] = 1
+                return questionDetails
+            }
+
+
+
+        }
+
+
+
+
+
+        function getNumbersAndSum(n) {
+            let numbersAndSum = { numbers: [], sum: 0 }
+            let sum = 0
+
+            for (let i = 0; i < n; i++) {
+                let number = Math.floor(Math.random() * 5 + 1)
+                number *= [-1, 1][Math.floor(Math.random() * 2)]
+                numbersAndSum["numbers"].push(number)
+                sum += number
+            }
+
+            numbersAndSum["sum"] = sum
+
+            return numbersAndSum
+        }
+
+        //************************** FUNCTIONS END **********************************
+    </script>
+
+</body>
+
+</html>
